@@ -603,7 +603,7 @@ const RENDERERS = {
                 <td>${badge(STATUT_LABELS,p.statut)}</td>
                 <td>${userName(p.declare_par_id)}</td>
                 <td>${fmtDate(p.date_signalement)}</td>
-                <td>${p.cout? p.cout+' €' : '—'}</td>
+                <td>${p.cout? p.cout+' AR' : '—'}</td>
                 ${canManage? `<td>
                   ${p.statut==='nouveau'? `<button class="btn-secondary" data-assign="${p.id}">Assigner</button>`:''}
                   ${p.statut==='en_maintenance'? `<button class="btn-secondary" data-close="${p.id}">Clôturer</button>`:''}
@@ -693,7 +693,7 @@ const RENDERERS = {
         ${statCard('materiels', d.materiels.length, 'Parc total', 'Matériels')}
         ${statCard('pannes', d.pannes.length, 'Pannes signalées', 'Depuis le début')}
         ${statCard('affectations', d.affectations.filter(a=>!a.date_retour).length, 'En circulation', 'Affectés')}
-        ${statCard('fournisseurs', coutTotal.toFixed(0)+' €', 'Coût maintenance', 'Cumulé')}
+        ${statCard('fournisseurs', coutTotal.toFixed(0)+' AR', 'Coût maintenance', 'Cumulé')}
       </div>
       <div class="panel">
         <h3>Répartition par état</h3>
@@ -903,7 +903,7 @@ function openCloturerModal(id){
     <h3>Clôturer la maintenance</h3>
     <form id="form-cloture">
       <div class="field"><label>Rapport d'intervention</label><textarea required id="fc-rapport" rows="3"></textarea></div>
-      <div class="field"><label>Coût (€)</label><input type="number" step="0.01" id="fc-cout"/></div>
+      <div class="field"><label>Coût (AR)</label><input type="number" step="0.01" id="fc-cout"/></div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn-primary">Clôturer</button>

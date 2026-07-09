@@ -693,7 +693,7 @@ const RENDERERS = {
         ${statCard('materiels', d.materiels.length, 'Parc total', 'Matériels')}
         ${statCard('pannes', d.pannes.length, 'Pannes signalées', 'Depuis le début')}
         ${statCard('affectations', d.affectations.filter(a=>!a.date_retour).length, 'En circulation', 'Affectés')}
-        ${statCard('fournisseurs', coutTotal.toFixed(0)+' AR', 'Coût maintenance', 'Cumulé')}
+        ${statCard('fournisseurs', coutTotal.toFixed(0)+' €', 'Coût maintenance', 'Cumulé')}
       </div>
       <div class="panel">
         <h3>Répartition par état</h3>

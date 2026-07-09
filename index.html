@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GMI — Gestion des Matériels Informatiques</title>
+<style>
+  :root{
+    --bg:#0a0a10;
+    --panel:#15151f;
+    --panel-2:#1a1a26;
+    --border:#232336;
+    --text:#f2f2f5;
+    --text-dim:#9497a8;
+    --pink:#ec4899;
+    --purple:#a855f7;
+    --grad:linear-gradient(135deg,#ec4899,#a855f7);
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:8px;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%, rgba(236,72,153,.12), transparent 40%),radial-gradient(circle at 80% 80%, rgba(168,85,247,.12), transparent 40%),var(--bg);}
+  .login-card{width:380px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .login-logo svg{width:38px;height:38px;}
+  .login-logo .title{font-size:20px;font-weight:700;}
+  .login-logo .sub{font-size:11px;color:var(--text-dim);}
+  .login-card h2{font-size:15px;color:var(--text-dim);font-weight:400;margin:20px 0 18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .field input, .field select, .field textarea{
+    width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);font-size:14px;outline:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--pink);}
+  .btn-primary{
+    width:100%;padding:12px;border:none;border-radius:10px;background:var(--grad);
+    color:#fff;font-weight:600;font-size:14px;margin-top:6px;
+  }
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:13px;}
+  .btn-secondary:hover{border-color:var(--pink);}
+  .btn-ghost{background:none;border:none;color:var(--text-dim);font-size:12px;text-decoration:underline;}
+  .login-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;}
+  .toggle-row{text-align:center;margin-top:16px;font-size:13px;color:var(--text-dim);}
+
+  /* ---------- APP LAYOUT ---------- */
+  #app{display:none;min-height:100vh;}
+  .layout{display:flex;min-height:100vh;}
+  .sidebar{
+    width:250px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);
+    padding:22px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 20px;}
+  .brand svg{width:34px;height:34px;}
+  .brand .title{font-size:17px;font-weight:700;line-height:1.1;}
+  .brand .sub{font-size:10px;color:var(--text-dim);line-height:1.2;}
+  .nav{display:flex;flex-direction:column;gap:3px;flex:1;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;
+    color:var(--text-dim);font-size:14px;font-weight:500;border:none;background:none;width:100%;text-align:left;
+  }
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+  .nav-item:hover{background:var(--panel-2);color:var(--text);}
+  .nav-item.active{background:var(--grad);color:#fff;}
+  .sidebar-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 8px;border-top:1px solid var(--border);margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .switch{width:34px;height:18px;border-radius:20px;background:var(--grad);position:relative;cursor:pointer;}
+  .switch::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;right:2px;}
+
+  .main{flex:1;padding:26px 32px;max-width:100%;overflow-x:hidden;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+  .topbar h1{font-size:22px;margin:0 0 3px;}
+  .topbar p{margin:0;color:var(--text-dim);font-size:13px;}
+  .user-chip{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);padding:6px 14px 6px 6px;border-radius:30px;}
+  .user-chip .avatar{width:32px;height:32px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .user-chip .name{font-size:13px;font-weight:600;}
+  .user-chip .role{font-size:11px;color:var(--text-dim);}
+  .logout-btn{background:none;border:none;color:var(--text-dim);font-size:12px;margin-left:6px;}
+  .logout-btn:hover{color:var(--red);}
+
+  .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:16px;margin-bottom:20px;}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+  .stat-card .icon{width:38px;height:38px;border-radius:10px;background:rgba(236,72,153,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+  .stat-card .icon svg{width:19px;height:19px;color:var(--pink);}
+  .stat-card .label{font-size:13px;color:var(--text-dim);}
+  .stat-card .value{font-size:26px;font-weight:700;margin:2px 0;}
+  .stat-card .delta{font-size:11px;color:var(--green);}
+
+  .grid-2{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;margin-bottom:18px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .panel h3{margin:0 0 16px;font-size:15px;}
+  .panel .see-all{display:block;margin-top:12px;font-size:12.5px;color:var(--pink);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--text-dim);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;}
+  td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge-green{background:rgba(34,197,94,.15);color:var(--green);}
+  .badge-yellow{background:rgba(234,179,8,.15);color:var(--yellow);}
+  .badge-red{background:rgba(239,68,68,.15);color:var(--red);}
+  .badge-purple{background:rgba(168,85,247,.15);color:var(--purple);}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+  .search-input{padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:13px;min-width:220px;}
+  .icon-btn{background:none;border:none;color:var(--text-dim);padding:5px;}
+  .icon-btn:hover{color:var(--pink);}
+
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:50;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px;width:420px;max-width:90vw;max-height:86vh;overflow-y:auto;}
+  .modal h3{margin:0 0 18px;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions .btn-primary{margin-top:0;}
+  .empty-state{text-align:center;color:var(--text-dim);padding:30px;font-size:13px;}
+  .donut-wrap{display:flex;align-items:center;gap:22px;}
+  .donut-legend{flex:1;display:flex;flex-direction:column;gap:9px;}
+  .donut-legend .row{display:flex;align-items:center;gap:8px;font-size:12.5px;}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--pink);padding:14px 18px;border-radius:10px;font-size:13px;z-index:100;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;}
+  .cat-hint{font-size:11px;color:var(--text-dim);margin-top:5px;}
+  @media(max-width:900px){.grid-2{grid-template-columns:1fr;} .sidebar{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="url(#g1)"/><path d="M14 30c0-6 4-10 10-10s10 4 10 10" stroke="white" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="20" r="2.2" fill="white"/><circle cx="29" cy="20" r="2.2" fill="white"/><path d="M24 8v6M17 10l3 5M31 10l-3 5" stroke="white" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g1" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#ec4899"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs></svg>
+      <div><div class="title">GMI</div><div class="sub">Gestion des Matériels Informatiques</div></div>
+    </div>
+    <h2 id="login-title">Connexion à votre espace</h2>
+    <div class="login-error" id="login-error"></div>
+
+    <form id="login-form">
+      <div class="field"><label>Email</label><input type="email" id="login-email" required placeholder="vous@organisation.com"/></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="login-password" required placeholder="••••••••"/></div>
+      <button class="btn-primary" type="submit">Se connecter</button>
+    </form>
+
+    <form id="register-form" style="display:none;">
+      <div class="field"><label>Nom complet</label><input type="text" id="reg-nom" required/></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" required/></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="reg-password" required/></div>
+      <div class="field"><label>Service</label><input type="text" id="reg-service" placeholder="ex: Informatique"/></div>
+      <button class="btn-primary" type="submit">Créer mon compte</button>
+    </form>
+
+    <div class="toggle-row">
+      <span id="toggle-to-register">Pas encore de compte ? <a href="#" class="btn-ghost">Créer un compte</a></span>
+      <span id="toggle-to-login" style="display:none;">Déjà inscrit ? <a href="#" class="btn-ghost">Se connecter</a></span>
+    </div>
+
+    <div class="field" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
+      <label>Adresse de l'API backend</label>
+      <input type="text" id="api-base" value="http://192.168.88.203:8000"/>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<div class="layout">
+  <div class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="url(#g2)"/><path d="M14 30c0-6 4-10 10-10s10 4 10 10" stroke="white" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="20" r="2.2" fill="white"/><circle cx="29" cy="20" r="2.2" fill="white"/><path d="M24 8v6M17 10l3 5M31 10l-3 5" stroke="white" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g2" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#ec4899"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs></svg>
+      <div><div class="title">GMI</div><div class="sub">Gestion des Matériels<br/>Informatiques</div></div>
+    </div>
+    <div class="nav" id="nav"></div>
+    <div class="sidebar-foot">
+      <span>Mode sombre</span>
+      <div class="switch"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Tableau de bord</h1>
+        <p id="page-sub">Voici un aperçu de votre système de gestion des matériels informatiques.</p>
+      </div>
+      <div class="user-chip">
+        <div class="avatar" id="user-avatar">?</div>
+        <div>
+          <div class="name" id="user-name">—</div>
+          <div class="role" id="user-role">—</div>
+        </div>
+        <button class="logout-btn" id="logout-btn">Déconnexion</button>
+      </div>
+    </div>
+
+    <div id="page-content"></div>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="modal-bg"><div class="modal" id="modal-body"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   ÉTAT GLOBAL
+   ============================================================ */
+const state = {
+  apiBase: 'http://192.168.88.203:8000',
+  token: null,
+  user: null,
+  page: 'dashboard',
+  data: { materiels:[], utilisateurs:[], fournisseurs:[], pannes:[], affectations:[], categories:[], types:[] }
+};
+
+const ICONS = {
+  dashboard:'<path d="M3 13h8V3H3v10zm10 8h8V9h-8v12zm-10 0h8v-6H3v6zm10-18v6h8V3h-8z"/>',
+  materiels:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  utilisateurs:'<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><path d="M18 8a3 3 0 0 1 0 6M22 21v-1a4 4 0 0 0-3-3.85"/>',
+  fournisseurs:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/>',
+  pannes:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a5 5 0 0 1-6.6 6.6L4.9 22 2 19.1l10.2-10.2a5 5 0 0 1 6.6-6.6z"/>',
+  affectations:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  historique:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 3"/>',
+  rapports:'<path d="M3 3v18h18"/><path d="M7 15l4-6 3 3 5-8"/>',
+  parametres:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
+};
+
+const NAV_ITEMS = [
+  {id:'dashboard', label:'Tableau de bord', icon:'dashboard'},
+  {id:'materiels', label:'Matériels', icon:'materiels'},
+  {id:'utilisateurs', label:'Utilisateurs', icon:'utilisateurs'},
+  {id:'fournisseurs', label:'Fournisseurs', icon:'fournisseurs'},
+  {id:'pannes', label:'Pannes / Maintenance', icon:'pannes'},
+  {id:'affectations', label:'Affectations', icon:'affectations'},
+  {id:'historique', label:'Historique / Journal', icon:'historique'},
+  {id:'rapports', label:'Rapports', icon:'rapports'},
+  {id:'parametres', label:'Paramètres', icon:'parametres'},
+];
+
+const ETAT_LABELS = {en_service:['En service','badge-green'], en_panne:['En panne','badge-red'], en_maintenance:['En maintenance','badge-yellow'], hors_service:['Hors service','badge-red'], stock:['En stock','badge-purple']};
+const STATUT_LABELS = {nouveau:['Nouveau','badge-yellow'], transmis:['Transmis','badge-purple'], en_maintenance:['En maintenance','badge-yellow'], resolu:['Résolu','badge-green'], hors_service:['Hors service','badge-red']};
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.style.display='none', 3200);
+}
+
+/* ============================================================
+   APPEL API
+   ============================================================ */
+async function api(path, {method='GET', body=null, form=false, auth=true} = {}){
+  const headers = {};
+  if(auth && state.token) headers['Authorization'] = 'Bearer '+state.token;
+  let payload = body;
+  if(body && !form){ headers['Content-Type']='application/json'; payload = JSON.stringify(body); }
+  const res = await fetch(state.apiBase+path, {method, headers, body: payload});
+  if(res.status===401){ logout(); throw new Error('Session expirée'); }
+  if(!res.ok){
+    let detail = 'Erreur ('+res.status+')';
+    try{ const j = await res.json(); detail = j.detail || detail; }catch(e){}
+    throw new Error(typeof detail==='string'?detail:JSON.stringify(detail));
+  }
+  if(res.status===204) return null;
+  return res.json();
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+document.getElementById('login-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  state.apiBase = document.getElementById('api-base').value.trim().replace(/\/$/,'');
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const errBox = document.getElementById('login-error');
+  errBox.style.display='none';
+  try{
+    const body = new URLSearchParams();
+    body.set('username', email); body.set('password', password);
+    const res = await fetch(state.apiBase+'/auth/login', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+    if(!res.ok){ const j = await res.json().catch(()=>({})); throw new Error(j.detail || 'Identifiants incorrects'); }
+    const data = await res.json();
+    state.token = data.access_token;
+    const me = await api('/auth/me');
+    state.user = me;
+    enterApp();
+  }catch(err){
+    errBox.textContent = err.message; errBox.style.display='block';
+  }
+});
+
+document.getElementById('register-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  state.apiBase = document.getElementById('api-base').value.trim().replace(/\/$/,'');
+  const errBox = document.getElementById('login-error');
+  errBox.style.display='none';
+  try{
+    await fetch(state.apiBase+'/auth/register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nom: document.getElementById('reg-nom').value,
+        email: document.getElementById('reg-email').value,
+        mot_de_passe: document.getElementById('reg-password').value,
+        service: document.getElementById('reg-service').value,
+        role: 'employe'
+      })
+    }).then(async r=>{ if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.detail || 'Erreur inscription'); } });
+    toast('Compte créé, vous pouvez vous connecter.');
+    document.getElementById('toggle-to-login').querySelector('a').click();
+  }catch(err){
+    errBox.textContent = err.message; errBox.style.display='block';
+  }
+});
+
+document.getElementById('toggle-to-register').addEventListener('click', e=>{
+  e.preventDefault();
+  document.getElementById('login-form').style.display='none';
+  document.getElementById('register-form').style.display='block';
+  document.getElementById('toggle-to-register').style.display='none';
+  document.getElementById('toggle-to-login').style.display='block';
+  document.getElementById('login-title').textContent = 'Créer votre compte';
+});
+document.getElementById('toggle-to-login').addEventListener('click', e=>{
+  e.preventDefault();
+  document.getElementById('login-form').style.display='block';
+  document.getElementById('register-form').style.display='none';
+  document.getElementById('toggle-to-register').style.display='block';
+  document.getElementById('toggle-to-login').style.display='none';
+  document.getElementById('login-title').textContent = 'Connexion à votre espace';
+});
+
+document.getElementById('logout-btn').addEventListener('click', logout);
+function logout(){
+  state.token=null; state.user=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('user-name').textContent = state.user.nom;
+  document.getElementById('user-role').textContent = state.user.role.charAt(0).toUpperCase()+state.user.role.slice(1);
+  document.getElementById('user-avatar').textContent = state.user.nom.slice(0,1).toUpperCase();
+  buildNav();
+  goTo('dashboard');
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function buildNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = NAV_ITEMS.map(it=>`
+    <button class="nav-item" data-page="${it.id}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[it.icon]}</svg>
+      ${it.label}
+    </button>`).join('');
+  nav.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>goTo(btn.dataset.page));
+  });
+}
+
+const PAGE_META = {
+  dashboard:['Tableau de bord', "Voici un aperçu de votre système de gestion des matériels informatiques."],
+  materiels:['Matériels', 'Gérez le parc informatique de votre organisation.'],
+  utilisateurs:['Utilisateurs', 'Comptes ayant accès à la plateforme.'],
+  fournisseurs:['Fournisseurs', 'Vos partenaires et prestataires référencés.'],
+  pannes:['Pannes / Maintenance', 'Suivi des signalements et interventions.'],
+  affectations:['Affectations', "Suivi des matériels affectés aux utilisateurs."],
+  historique:['Historique / Journal', "Traçabilité des mouvements par matériel."],
+  rapports:['Rapports', "Vue synthétique de votre parc."],
+  parametres:['Paramètres', "Votre profil et la configuration de l'application."],
+};
+
+async function goTo(page){
+  state.page = page;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  document.getElementById('page-title').textContent = PAGE_META[page][0];
+  document.getElementById('page-sub').textContent = PAGE_META[page][1];
+  const content = document.getElementById('page-content');
+  content.innerHTML = '<div class="empty-state">Chargement…</div>';
+  try{
+    await RENDERERS[page]();
+  }catch(err){
+    content.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function openModal(html){
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-bg').style.display='flex';
+}
+function closeModal(){ document.getElementById('modal-bg').style.display='none'; }
+document.getElementById('modal-bg').addEventListener('click', e=>{ if(e.target.id==='modal-bg') closeModal(); });
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function fmtDate(d){ if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString('fr-FR'); }
+function badge(map, key){ const v = map[key] || [key,'badge-purple']; return `<span class="badge ${v[1]}">${v[0]}</span>`; }
+async function loadAll(){
+  const [materiels, utilisateurs, fournisseurs, pannes, affectations, categories, types] = await Promise.all([
+    api('/materiels'), api('/utilisateurs'), api('/fournisseurs'), api('/pannes'), api('/affectations'), api('/categories'), api('/types')
+  ]);
+  state.data = {materiels, utilisateurs, fournisseurs, pannes, affectations, categories, types};
+}
+function userName(id){ const u = state.data.utilisateurs.find(u=>u.id===id); return u? u.nom : ('#'+id); }
+function materielLabel(id){ const m = state.data.materiels.find(m=>m.id===id); if(!m) return '#'+id; const t = state.data.types.find(t=>t.id===m.type_id); return (t?t.nom:'Matériel')+' — '+m.numero_serie; }
+function typeLabel(id){ const t = state.data.types.find(t=>t.id===id); return t? t.nom : '#'+id; }
+function categorieLabel(id){ const c = state.data.categories.find(c=>c.id===id); return c? c.nom : '#'+id; }
+function fournisseurLabel(id){ const f = state.data.fournisseurs.find(f=>f.id===id); return f? f.nom : '—'; }
+
+/* ============================================================
+   RENDERERS PAR PAGE
+   ============================================================ */
+const RENDERERS = {
+
+  async dashboard(){
+    await loadAll();
+    const d = state.data;
+    const enPanne = d.pannes.filter(p=>p.statut!=='resolu').length;
+    const affEnCours = d.affectations.filter(a=>!a.date_retour).length;
+
+    const parCat = {};
+    d.materiels.forEach(m=>{
+      const t = d.types.find(t=>t.id===m.type_id);
+      const cat = t ? categorieLabel(t.categorie_id) : 'Autres';
+      parCat[cat] = (parCat[cat]||0)+1;
+    });
+    const colors = ['#ec4899','#c026d3','#a855f7','#8b5cf6','#6366f1','#f472b6'];
+    const catEntries = Object.entries(parCat);
+    const total = d.materiels.length || 1;
+
+    let offset = 0;
+    const segs = catEntries.map(([name,count],i)=>{
+      const pct = count/total;
+      const seg = `${colors[i%colors.length]} ${offset*360}deg ${(offset+pct)*360}deg`;
+      offset += pct;
+      return seg;
+    }).join(', ');
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="grid-stats">
+        ${statCard('materiels', d.materiels.length, 'Matériels', 'Total')}
+        ${statCard('utilisateurs', d.utilisateurs.length, 'Utilisateurs', 'Actifs')}
+        ${statCard('pannes', enPanne, 'Pannes', 'En cours')}
+        ${statCard('affectations', affEnCours, 'Affectations', 'En cours')}
+        ${statCard('fournisseurs', d.fournisseurs.length, 'Fournisseurs', 'Référencés')}
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Matériels par catégorie</h3>
+          <div class="donut-wrap">
+            <div style="width:140px;height:140px;border-radius:50%;background:conic-gradient(${segs || '#232336 0deg 360deg'});display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <div style="width:88px;height:88px;border-radius:50%;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-size:20px;font-weight:700;">${d.materiels.length}</div>
+                <div style="font-size:10px;color:var(--text-dim);">Total</div>
+              </div>
+            </div>
+            <div class="donut-legend">
+              ${catEntries.length? catEntries.map(([name,count],i)=>`
+                <div class="row"><span class="dot" style="background:${colors[i%colors.length]}"></span>${name} (${count})</div>
+              `).join('') : '<div class="row" style="color:var(--text-dim)">Aucun matériel enregistré</div>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Pannes récentes</h3>
+          ${d.pannes.slice(-4).reverse().map(p=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:13px;font-weight:600;">${p.description.slice(0,40)}</div>
+                <div style="font-size:11px;color:var(--text-dim);">Signalé par ${userName(p.declare_par_id)} · ${fmtDate(p.date_signalement)}</div>
+              </div>
+              ${badge(STATUT_LABELS, p.statut)}
+            </div>
+          `).join('') || '<div class="empty-state">Aucune panne signalée</div>'}
+          <a class="see-all" href="#" data-nav="pannes">Voir toutes les pannes →</a>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Matériels récents</h3>
+          <table>
+            <thead><tr><th>Désignation</th><th>État</th><th>Acquisition</th><th>Fournisseur</th></tr></thead>
+            <tbody>
+              ${d.materiels.slice(-5).reverse().map(m=>`
+                <tr><td>${typeLabel(m.type_id)} — ${m.numero_serie}</td><td>${badge(ETAT_LABELS,m.etat)}</td><td>${fmtDate(m.date_acquisition)}</td><td>${fournisseurLabel(m.fournisseur_id)}</td></tr>
+              `).join('') || `<tr><td class="empty-state" colspan="4">Aucun matériel</td></tr>`}
+            </tbody>
+          </table>
+          <a class="see-all" href="#" data-nav="materiels">Voir tous les matériels →</a>
+        </div>
+        <div class="panel">
+          <h3>Affectations récentes</h3>
+          ${d.affectations.slice(-4).reverse().map(a=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:13px;font-weight:600;">${materielLabel(a.materiel_id)}</div>
+                <div style="font-size:11px;color:var(--text-dim);">Affecté à ${userName(a.utilisateur_id)} · ${fmtDate(a.date_affectation)}</div>
+              </div>
+            </div>
+          `).join('') || '<div class="empty-state">Aucune affectation</div>'}
+          <a class="see-all" href="#" data-nav="affectations">Voir toutes les affectations →</a>
+        </div>
+      </div>
+    `;
+    document.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click', e=>{ e.preventDefault(); goTo(el.dataset.nav); }));
+  },
+
+  async materiels(){
+    await loadAll();
+    const isAdmin = state.user.role === 'admin';
+    document.getElementById('page-content').innerHTML = `
+      <div class="toolbar">
+        <input class="search-input" id="mat-search" placeholder="Rechercher un matériel…"/>
+        ${isAdmin? '<button class="btn-primary" style="width:auto;" id="mat-add">+ Ajouter un matériel</button>' : ''}
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>N° série</th><th>Type</th><th>Catégorie</th><th>État</th><th>Localisation</th><th>Fournisseur</th><th>Acquisition</th></tr></thead>
+          <tbody id="mat-tbody"></tbody>
+        </table>
+      </div>
+    `;
+    const renderRows = (filter='')=>{
+      const rows = state.data.materiels.filter(m=> (m.numero_serie+typeLabel(m.type_id)).toLowerCase().includes(filter.toLowerCase()));
+      document.getElementById('mat-tbody').innerHTML = rows.map(m=>{
+        const t = state.data.types.find(t=>t.id===m.type_id);
+        return `<tr><td>${m.numero_serie}</td><td>${typeLabel(m.type_id)}</td><td>${t?categorieLabel(t.categorie_id):'—'}</td><td>${badge(ETAT_LABELS,m.etat)}</td><td>${m.localisation||'—'}</td><td>${fournisseurLabel(m.fournisseur_id)}</td><td>${fmtDate(m.date_acquisition)}</td></tr>`;
+      }).join('') || `<tr><td class="empty-state" colspan="7">Aucun matériel trouvé</td></tr>`;
+    };
+    renderRows();
+    document.getElementById('mat-search').addEventListener('input', e=>renderRows(e.target.value));
+    if(isAdmin) document.getElementById('mat-add').addEventListener('click', openMaterielModal);
+  },
+
+  async utilisateurs(){
+    await loadAll();
+    document.getElementById('page-content').innerHTML = `
+      <div class="panel">
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Service</th><th>Téléphone</th></tr></thead>
+          <tbody>
+            ${state.data.utilisateurs.map(u=>`<tr><td>${u.nom}</td><td>${u.email}</td><td>${badge({admin:['Admin','badge-purple'],technicien:['Technicien','badge-yellow'],employe:['Employé','badge-green']}, u.role)}</td><td>${u.service||'—'}</td><td>${u.telephone||'—'}</td></tr>`).join('') || `<tr><td class="empty-state" colspan="5">Aucun utilisateur</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+  },
+
+  async fournisseurs(){
+    await loadAll();
+    const isAdmin = state.user.role === 'admin';
+    document.getElementById('page-content').innerHTML = `
+      <div class="toolbar">
+        <div></div>
+        ${isAdmin? '<button class="btn-primary" style="width:auto;" id="fourn-add">+ Ajouter un fournisseur</button>' : ''}
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Nom</th><th>Contact</th><th>Téléphone</th><th>Email</th><th>Adresse</th></tr></thead>
+          <tbody>
+            ${state.data.fournisseurs.map(f=>`<tr><td>${f.nom}</td><td>${f.contact||'—'}</td><td>${f.telephone||'—'}</td><td>${f.email||'—'}</td><td>${f.adresse||'—'}</td></tr>`).join('') || `<tr><td class="empty-state" colspan="5">Aucun fournisseur</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+    if(isAdmin) document.getElementById('fourn-add').addEventListener('click', openFournisseurModal);
+  },
+
+  async pannes(){
+    await loadAll();
+    const canManage = state.user.role === 'admin' || state.user.role === 'technicien';
+    document.getElementById('page-content').innerHTML = `
+      <div class="toolbar">
+        <div></div>
+        <button class="btn-primary" style="width:auto;" id="panne-add">+ Signaler une panne</button>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Matériel</th><th>Description</th><th>Statut</th><th>Signalé par</th><th>Date</th><th>Coût</th>${canManage?'<th>Actions</th>':''}</tr></thead>
+          <tbody>
+            ${state.data.pannes.slice().reverse().map(p=>`
+              <tr>
+                <td>${materielLabel(p.materiel_id)}</td>
+                <td>${p.description}</td>
+                <td>${badge(STATUT_LABELS,p.statut)}</td>
+                <td>${userName(p.declare_par_id)}</td>
+                <td>${fmtDate(p.date_signalement)}</td>
+                <td>${p.cout? p.cout+' €' : '—'}</td>
+                ${canManage? `<td>
+                  ${p.statut==='nouveau'? `<button class="btn-secondary" data-assign="${p.id}">Assigner</button>`:''}
+                  ${p.statut==='en_maintenance'? `<button class="btn-secondary" data-close="${p.id}">Clôturer</button>`:''}
+                </td>`:''}
+              </tr>
+            `).join('') || `<tr><td class="empty-state" colspan="7">Aucune panne signalée</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+    document.getElementById('panne-add').addEventListener('click', openPanneModal);
+    document.querySelectorAll('[data-assign]').forEach(b=>b.addEventListener('click', ()=>openAssignerModal(b.dataset.assign)));
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', ()=>openCloturerModal(b.dataset.close)));
+  },
+
+  async affectations(){
+    await loadAll();
+    const isAdmin = state.user.role === 'admin';
+    document.getElementById('page-content').innerHTML = `
+      <div class="toolbar">
+        <div></div>
+        ${isAdmin? '<button class="btn-primary" style="width:auto;" id="aff-add">+ Nouvelle affectation</button>':''}
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Matériel</th><th>Utilisateur</th><th>Date affectation</th><th>Date retour</th><th>Commentaire</th>${isAdmin?'<th>Actions</th>':''}</tr></thead>
+          <tbody>
+            ${state.data.affectations.slice().reverse().map(a=>`
+              <tr>
+                <td>${materielLabel(a.materiel_id)}</td>
+                <td>${userName(a.utilisateur_id)}</td>
+                <td>${fmtDate(a.date_affectation)}</td>
+                <td>${a.date_retour? fmtDate(a.date_retour) : '<span class="badge badge-yellow">En cours</span>'}</td>
+                <td>${a.commentaire||'—'}</td>
+                ${isAdmin? `<td>${!a.date_retour? `<button class="btn-secondary" data-retour="${a.id}">Marquer le retour</button>`:''}</td>`:''}
+              </tr>
+            `).join('') || `<tr><td class="empty-state" colspan="6">Aucune affectation</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+    if(isAdmin){
+      document.getElementById('aff-add').addEventListener('click', openAffectationModal);
+      document.querySelectorAll('[data-retour]').forEach(b=>b.addEventListener('click', async ()=>{
+        try{ await api(`/affectations/${b.dataset.retour}/retour`, {method:'PATCH'}); toast('Matériel marqué comme retourné.'); goTo('affectations'); }
+        catch(err){ toast(err.message); }
+      }));
+    }
+  },
+
+  async historique(){
+    await loadAll();
+    document.getElementById('page-content').innerHTML = `
+      <div class="panel">
+        <div class="field" style="max-width:340px;">
+          <label>Choisir un matériel</label>
+          <select id="hist-select">
+            <option value="">— Sélectionner —</option>
+            ${state.data.materiels.map(m=>`<option value="${m.id}">${typeLabel(m.type_id)} — ${m.numero_serie}</option>`).join('')}
+          </select>
+        </div>
+        <div id="hist-result" style="margin-top:18px;"></div>
+      </div>
+    `;
+    document.getElementById('hist-select').addEventListener('change', async e=>{
+      const id = e.target.value;
+      const box = document.getElementById('hist-result');
+      if(!id){ box.innerHTML=''; return; }
+      box.innerHTML = 'Chargement…';
+      try{
+        const events = await api(`/historique/${id}`);
+        box.innerHTML = events.length? `<table><thead><tr><th>Action</th><th>Date</th><th>Par</th><th>Détails</th></tr></thead><tbody>
+          ${events.map(ev=>`<tr><td>${ev.action}</td><td>${fmtDate(ev.date)}</td><td>${ev.utilisateur_action_id?userName(ev.utilisateur_action_id):'—'}</td><td>${ev.details||'—'}</td></tr>`).join('')}
+        </tbody></table>` : '<div class="empty-state">Aucun mouvement enregistré pour ce matériel</div>';
+      }catch(err){ box.innerHTML = `<div class="empty-state">${err.message}</div>`; }
+    });
+  },
+
+  async rapports(){
+    await loadAll();
+    const d = state.data;
+    const parEtat = {};
+    d.materiels.forEach(m=>parEtat[m.etat]=(parEtat[m.etat]||0)+1);
+    const coutTotal = d.pannes.reduce((s,p)=>s+(p.cout||0),0);
+    document.getElementById('page-content').innerHTML = `
+      <div class="grid-stats">
+        ${statCard('materiels', d.materiels.length, 'Parc total', 'Matériels')}
+        ${statCard('pannes', d.pannes.length, 'Pannes signalées', 'Depuis le début')}
+        ${statCard('affectations', d.affectations.filter(a=>!a.date_retour).length, 'En circulation', 'Affectés')}
+        ${statCard('fournisseurs', coutTotal.toFixed(0)+' €', 'Coût maintenance', 'Cumulé')}
+      </div>
+      <div class="panel">
+        <h3>Répartition par état</h3>
+        <table>
+          <thead><tr><th>État</th><th>Nombre</th><th>Part</th></tr></thead>
+          <tbody>
+            ${Object.entries(parEtat).map(([etat,count])=>`<tr><td>${badge(ETAT_LABELS,etat)}</td><td>${count}</td><td>${((count/(d.materiels.length||1))*100).toFixed(0)}%</td></tr>`).join('') || `<tr><td class="empty-state" colspan="3">Pas de données</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    `;
+  },
+
+  async parametres(){
+    document.getElementById('page-content').innerHTML = `
+      <div class="panel" style="max-width:480px;">
+        <h3>Mon profil</h3>
+        <div class="field"><label>Nom</label><input value="${state.user.nom}" disabled/></div>
+        <div class="field"><label>Email</label><input value="${state.user.email}" disabled/></div>
+        <div class="field"><label>Rôle</label><input value="${state.user.role}" disabled/></div>
+        <div class="field"><label>Service</label><input value="${state.user.service||''}" disabled/></div>
+        <div class="field"><label>Adresse API</label><input value="${state.apiBase}" disabled/></div>
+        <p class="cat-hint">Pour modifier ces informations, contactez un administrateur.</p>
+      </div>
+    `;
+  },
+};
+
+function statCard(icon, value, label, delta){
+  return `<div class="stat-card">
+    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[icon]}</svg></div>
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+    <div class="delta">${delta}</div>
+  </div>`;
+}
+
+/* ============================================================
+   MODALES : FORMULAIRES
+   ============================================================ */
+function openMaterielModal(){
+  const d = state.data;
+  openModal(`
+    <h3>Ajouter un matériel</h3>
+    <form id="form-materiel">
+      <div class="field"><label>N° de série</label><input required id="f-serie"/></div>
+      <div class="field"><label>Catégorie</label>
+        <select id="f-cat">
+          <option value="">— Nouvelle catégorie —</option>
+          ${d.categories.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('')}
+        </select>
+        <input id="f-cat-new" placeholder="Nom de la nouvelle catégorie" style="margin-top:6px;display:${d.categories.length?'none':'block'}"/>
+      </div>
+      <div class="field"><label>Type</label>
+        <select id="f-type"></select>
+        <input id="f-type-new" placeholder="Nom du nouveau type" style="margin-top:6px;display:none;"/>
+      </div>
+      <div class="field"><label>Fournisseur</label>
+        <select id="f-fourn"><option value="">— Aucun —</option>${d.fournisseurs.map(f=>`<option value="${f.id}">${f.nom}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Date d'acquisition</label><input type="date" id="f-date"/></div>
+      <div class="field"><label>État</label>
+        <select id="f-etat">
+          <option value="en_service">En service</option>
+          <option value="stock">En stock</option>
+          <option value="en_panne">En panne</option>
+          <option value="en_maintenance">En maintenance</option>
+          <option value="hors_service">Hors service</option>
+        </select>
+      </div>
+      <div class="field"><label>Localisation</label><input id="f-loc" placeholder="ex: Bureau 204"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  `);
+  const refreshTypes = (catId)=>{
+    const sel = document.getElementById('f-type');
+    const opts = d.types.filter(t=>!catId || t.categorie_id==catId);
+    sel.innerHTML = '<option value="">— Nouveau type —</option>'+opts.map(t=>`<option value="${t.id}">${t.nom}</option>`).join('');
+    document.getElementById('f-type-new').style.display = opts.length? 'none':'block';
+  };
+  refreshTypes(document.getElementById('f-cat').value);
+  document.getElementById('f-cat').addEventListener('change', e=>{
+    document.getElementById('f-cat-new').style.display = e.target.value? 'none':'block';
+    refreshTypes(e.target.value);
+  });
+  document.getElementById('f-type').addEventListener('change', e=>{
+    document.getElementById('f-type-new').style.display = e.target.value? 'none':'block';
+  });
+
+  document.getElementById('form-materiel').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      let catId = document.getElementById('f-cat').value;
+      if(!catId){
+        const nom = document.getElementById('f-cat-new').value.trim();
+        if(!nom) throw new Error('Indiquez le nom de la catégorie');
+        const cat = await api('/categories', {method:'POST', body:{nom}});
+        catId = cat.id;
+      }
+      let typeId = document.getElementById('f-type').value;
+      if(!typeId){
+        const nom = document.getElementById('f-type-new').value.trim();
+        if(!nom) throw new Error('Indiquez le nom du type');
+        const t = await api('/types', {method:'POST', body:{nom, categorie_id: Number(catId)}});
+        typeId = t.id;
+      }
+      await api('/materiels', {method:'POST', body:{
+        numero_serie: document.getElementById('f-serie').value,
+        type_id: Number(typeId),
+        fournisseur_id: document.getElementById('f-fourn').value? Number(document.getElementById('f-fourn').value): null,
+        date_acquisition: document.getElementById('f-date').value? new Date(document.getElementById('f-date').value).toISOString(): null,
+        etat: document.getElementById('f-etat').value,
+        localisation: document.getElementById('f-loc').value || null,
+      }});
+      closeModal(); toast('Matériel ajouté.'); goTo('materiels');
+    }catch(err){ toast(err.message); }
+  });
+}
+
+function openFournisseurModal(){
+  openModal(`
+    <h3>Ajouter un fournisseur</h3>
+    <form id="form-fourn">
+      <div class="field"><label>Nom</label><input required id="ff-nom"/></div>
+      <div class="field"><label>Contact</label><input id="ff-contact"/></div>
+      <div class="field"><label>Téléphone</label><input id="ff-tel"/></div>
+      <div class="field"><label>Email</label><input type="email" id="ff-email"/></div>
+      <div class="field"><label>Adresse</label><input id="ff-adresse"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('form-fourn').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      await api('/fournisseurs', {method:'POST', body:{
+        nom: document.getElementById('ff-nom').value,
+        contact: document.getElementById('ff-contact').value || null,
+        telephone: document.getElementById('ff-tel').value || null,
+        email: document.getElementById('ff-email').value || null,
+        adresse: document.getElementById('ff-adresse').value || null,
+      }});
+      closeModal(); toast('Fournisseur ajouté.'); goTo('fournisseurs');
+    }catch(err){ toast(err.message); }
+  });
+}
+
+function openPanneModal(){
+  const d = state.data;
+  openModal(`
+    <h3>Signaler une panne</h3>
+    <form id="form-panne">
+      <div class="field"><label>Matériel concerné</label>
+        <select required id="fp-materiel">${d.materiels.map(m=>`<option value="${m.id}">${typeLabel(m.type_id)} — ${m.numero_serie}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Description du problème</label><textarea required id="fp-desc" rows="3"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Signaler</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('form-panne').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      await api('/pannes', {method:'POST', body:{materiel_id:Number(document.getElementById('fp-materiel').value), description: document.getElementById('fp-desc').value}});
+      closeModal(); toast('Panne signalée.'); goTo('pannes');
+    }catch(err){ toast(err.message); }
+  });
+}
+
+function openAssignerModal(id){
+  const d = state.data;
+  const techniciens = d.utilisateurs.filter(u=>u.role==='technicien');
+  openModal(`
+    <h3>Assigner un technicien</h3>
+    <form id="form-assign">
+      <div class="field"><label>Technicien interne</label>
+        <select id="fa-tech"><option value="">— Aucun —</option>${techniciens.map(t=>`<option value="${t.id}">${t.nom}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Ou technicien externe</label><input id="fa-ext" placeholder="Nom de la société / du technicien"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Assigner</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('form-assign').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      await api(`/pannes/${id}/assigner`, {method:'PATCH', body:{
+        technicien_id: document.getElementById('fa-tech').value? Number(document.getElementById('fa-tech').value): null,
+        technicien_externe: document.getElementById('fa-ext').value || null,
+      }});
+      closeModal(); toast('Technicien assigné.'); goTo('pannes');
+    }catch(err){ toast(err.message); }
+  });
+}
+
+function openCloturerModal(id){
+  openModal(`
+    <h3>Clôturer la maintenance</h3>
+    <form id="form-cloture">
+      <div class="field"><label>Rapport d'intervention</label><textarea required id="fc-rapport" rows="3"></textarea></div>
+      <div class="field"><label>Coût (€)</label><input type="number" step="0.01" id="fc-cout"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Clôturer</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('form-cloture').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      await api(`/pannes/${id}/cloturer`, {method:'PATCH', body:{
+        rapport: document.getElementById('fc-rapport').value,
+        cout: document.getElementById('fc-cout').value? Number(document.getElementById('fc-cout').value): null,
+      }});
+      closeModal(); toast('Maintenance clôturée.'); goTo('pannes');
+    }catch(err){ toast(err.message); }
+  });
+}
+
+function openAffectationModal(){
+  const d = state.data;
+  const dispo = d.materiels.filter(m=>m.etat==='en_service' || m.etat==='stock');
+  openModal(`
+    <h3>Nouvelle affectation</h3>
+    <form id="form-aff">
+      <div class="field"><label>Matériel</label>
+        <select required id="fa2-mat">${(dispo.length?dispo:d.materiels).map(m=>`<option value="${m.id}">${typeLabel(m.type_id)} — ${m.numero_serie}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Utilisateur</label>
+        <select required id="fa2-user">${d.utilisateurs.map(u=>`<option value="${u.id}">${u.nom}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Commentaire</label><input id="fa2-comment"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary">Affecter</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('form-aff').addEventListener('submit', async e=>{
+    e.preventDefault();
+    try{
+      await api('/affectations', {method:'POST', body:{
+        materiel_id: Number(document.getElementById('fa2-mat').value),
+        utilisateur_id: Number(document.getElementById('fa2-user').value),
+        commentaire: document.getElementById('fa2-comment').value || null,
+      }});
+      closeModal(); toast('Affectation créée.'); goTo('affectations');
+    }catch(err){ toast(err.message); }
+  });
+}
+</script>
+</body>
+</html>
